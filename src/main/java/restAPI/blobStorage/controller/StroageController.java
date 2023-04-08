@@ -26,8 +26,13 @@ public class StroageController {
     @GetMapping("/{filename}")
     public ResponseEntity<?> downloadImage(@PathVariable  String filename){
         byte[] imageData = storageService.downloadImage(filename);
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("image/png")).
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("plain/text")).
                 body(imageData);
 
+    }
+
+    @PostMapping ("/testName")
+    public Object test( @RequestBody String jsonString){
+        return storageService.saveAsYaml(jsonString);
     }
 }

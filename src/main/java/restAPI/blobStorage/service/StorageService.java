@@ -1,5 +1,10 @@
 package restAPI.blobStorage.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,7 +21,24 @@ public class StorageService {
     @Autowired
     private StorageRepository storageRepository;
 
+    public Object saveAsYaml( String data) {
+        //String data = "{\"name\":\"John\",\"age\":30,\"city\":\"New York\"}";
+        Gson gson = new Gson();
+        JsonObject jsonObject = gson.fromJson(data, JsonObject.class);
+        String name = jsonObject.get("name").getAsString();
+        ImageData entityToSave = storageRepository.save(ImageData.builder()
+                        .name(name)
+                        .imageData(data.getBytes())
+                        .type("text")
+                        .build()
+                                );
+        return name;
+    }
+
     public String uploadImage (MultipartFile file ) throws IOException {
+
+        String json = "{'name' : 'mkyong'}";
+
         ImageData imageData = storageRepository.save(ImageData.builder()
                 .name(file.getOriginalFilename())
                 .type(file.getContentType())
