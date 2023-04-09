@@ -26,13 +26,22 @@ public class StroageController {
     @GetMapping("/{filename}")
     public ResponseEntity<?> downloadImage(@PathVariable  String filename){
         byte[] imageData = storageService.downloadImage(filename);
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("plain/text")).
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("mutipart/form-data")).
                 body(imageData);
 
     }
 
-    @PostMapping ("/testName")
-    public Object test( @RequestBody String jsonString){
+    @PostMapping ("/saveYaml")
+    public Object saveAsYaml( @RequestBody String jsonString){
         return storageService.saveAsYaml(jsonString);
+    }
+
+    @GetMapping("/yamlData")
+    public String getYamlString(@RequestParam  Long id){
+        try {
+            return storageService.getSavedYaml(id);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
