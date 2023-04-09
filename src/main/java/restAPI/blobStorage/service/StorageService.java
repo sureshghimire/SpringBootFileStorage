@@ -5,11 +5,15 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.config.YamlMapFactoryBean;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.MediaTypeFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.Yaml;
@@ -17,10 +21,7 @@ import restAPI.blobStorage.entity.ImageData;
 import restAPI.blobStorage.repository.StorageRepository;
 import restAPI.blobStorage.util.ImageUtils;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
@@ -33,35 +34,21 @@ public class StorageService {
     public Object saveAsYaml( String data) {
         // data = "{\"name\":\"John\",\"age\":30,\"city\":\"New York\"}";
 
-//         data = "{\n" +
-//                "  \"name\": \"John\",\n" +
-//                "  \"age\": 30,\n" +
-//                "  \"address\": {\n" +
-//                "    \"street\": \"123 Main St\",\n" +
-//                "    \"city\": \"New York\",\n" +
-//                "    \"state\": \"NY\",\n" +
-//                "    \"zip\": \"10001\"\n" +
-//                "  },\n" +
-//                "  \"contacts\": [\n" +
-//                "    {\n" +
-//                "      \"type\": \"email\",\n" +
-//                "      \"value\": \"john@example.com\"\n" +
-//                "    },\n" +
-//                "    {\n" +
-//                "      \"type\": \"phone\",\n" +
-//                "      \"value\": \"555-1234\"\n" +
-//                "    }\n" +
-//                "  ]\n" +
-//                "}";
-
-
         Gson gson = new Gson();
         JsonObject jsonObject = gson.fromJson(data, JsonObject.class);
         String name = jsonObject.get("name").getAsString();
         try {
             JsonNode jsonNode = new ObjectMapper().readTree(data);
-            String asString = new YAMLMapper().writeValueAsString(jsonNode);
-            System.out.println("As YAML"+asString);
+
+            //----  To Avoid the --- (start of the yaml doc) at the top
+            YAMLFactory yamlFactory = new YAMLFactory();
+            YAMLMapper yamlMapper = new YAMLMapper(yamlFactory);
+            yamlMapper.configure(YAMLGenerator.Feature.WRITE_DOC_START_MARKER,false);
+
+            //--------------------------------
+
+            //String asString = new YAMLMapper().writeValueAsString(jsonNode); // avoid avoid and use this line if you don't want to configure
+            String asString = yamlMapper.writeValueAsString(jsonNode);
 
             byte [] dataBytes  = asString.getBytes();
             ImageData entityToSave = storageRepository.save(ImageData.builder()
@@ -115,9 +102,6 @@ public class StorageService {
 
 
     public String uploadImage (MultipartFile file ) throws IOException {
-
-        String json = "{'name' : 'mkyong'}";
-
         ImageData imageData = storageRepository.save(ImageData.builder()
                 .name(file.getOriginalFilename())
                 .type(file.getContentType())
@@ -134,9 +118,32 @@ public class StorageService {
         return  images;
     }
 
+    public byte [] downloadYaml(Long id){
+        Optional<ImageData> yamlData = storageRepository.findById(id);
+        if (yamlData.isPresent()){
+            byte []yamlBytes  = yamlData.get().getImageData();
+            System.out.println(String.valueOf(yamlBytes));
+            if (yamlBytes !=null){
+               return yamlBytes;
+            }else
+                try {
+                    throw  new Exception("File does not contain data");
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+        }else
+            try {
+                throw new Exception("Entity does not exists");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+    }
     private String convertJsonToYaml(String jsonObject){
         Yaml yaml = new Yaml();
         Object obj = yaml.load(jsonObject);
         return yaml.dump(obj);
     }
+
+
+
 }

@@ -1,6 +1,7 @@
 package restAPI.blobStorage.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -11,13 +12,13 @@ import restAPI.blobStorage.service.StorageService;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/images")
+@RequestMapping("/blob")
 public class StroageController {
 
     @Autowired
     private StorageService storageService;
 
-    @PostMapping
+    @PostMapping("/uploadImage")
     public ResponseEntity<?> uploadImage(@RequestParam("image") MultipartFile file) throws IOException {
        String uploadImage = storageService.uploadImage(file);
        return ResponseEntity.status(HttpStatus.OK).body(uploadImage);
@@ -26,8 +27,18 @@ public class StroageController {
     @GetMapping("/{filename}")
     public ResponseEntity<?> downloadImage(@PathVariable  String filename){
         byte[] imageData = storageService.downloadImage(filename);
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("mutipart/form-data")).
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("image/png")).
                 body(imageData);
+
+    }
+
+    @GetMapping("/downloadYaml")
+    public ResponseEntity<?> downloadYaml(@RequestParam  Long id){
+        byte [] dataBytes = storageService.downloadYaml(id);
+        ByteArrayResource resource = new ByteArrayResource(dataBytes);
+
+        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("plain/text")).
+                body(resource);
 
     }
 
@@ -36,7 +47,7 @@ public class StroageController {
         return storageService.saveAsYaml(jsonString);
     }
 
-    @GetMapping("/yamlData")
+    @GetMapping("/getYaml")
     public String getYamlString(@RequestParam  Long id){
         try {
             return storageService.getSavedYaml(id);
