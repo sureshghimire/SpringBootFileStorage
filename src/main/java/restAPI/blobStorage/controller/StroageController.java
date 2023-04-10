@@ -2,6 +2,7 @@ package restAPI.blobStorage.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,10 @@ public class StroageController {
     @GetMapping("/{filename}")
     public ResponseEntity<?> downloadImage(@PathVariable  String filename){
         byte[] imageData = storageService.downloadImage(filename);
-        return ResponseEntity.status(HttpStatus.OK).contentType(MediaType.valueOf("image/png")).
-                body(imageData);
+        return ResponseEntity.status(HttpStatus.OK)
+                .contentType(MediaType.valueOf("image/png"))
+               // .header(HttpHeaders.CONTENT_DISPOSITION, "attachment+"+ filename) // this will make the file download on call
+                        .body(imageData);
 
     }
 

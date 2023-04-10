@@ -122,7 +122,6 @@ public class StorageService {
         Optional<ImageData> yamlData = storageRepository.findById(id);
         if (yamlData.isPresent()){
             byte []yamlBytes  = yamlData.get().getImageData();
-            System.out.println(String.valueOf(yamlBytes));
             if (yamlBytes !=null){
                return yamlBytes;
             }else
